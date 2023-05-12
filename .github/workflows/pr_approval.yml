@@ -9,7 +9,7 @@ jobs:
     env:
       commit_id: ${{ github.event.pull_request.head.sha }}
     # Trigger back-merge master when PR is approved and feature branch isn't hotfix branch
-    if: github.event.review.state == 'approved' && !contains(github.event.pull_request.head.ref, 'hotfix') && !contains(github.event.pull_request.head.ref, 'revert-')
+    #if: github.event.review.state == 'approved' && !contains(github.event.pull_request.head.ref, 'hotfix') && !contains(github.event.pull_request.head.ref, 'revert-')
     runs-on: [ubuntu-latest]
     steps:
       - name: checkout
