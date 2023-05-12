@@ -1,0 +1,58 @@
+name: PR validate UT and Roast Workflow
+
+on:
+  pull_request:
+    types: [opened, synchronize,reopened,submitted]
+
+jobs:
+  pull_request_approved:
+    env:
+      commit_id: ${{ github.event.pull_request.head.sha }}
+    # Trigger back-merge master when PR is approved and feature branch isn't hotfix branch
+    if: github.event.review.state == 'approved' && !contains(github.event.pull_request.head.ref, 'hotfix') && !contains(github.event.pull_request.head.ref, 'revert-')
+    runs-on: [self-hosted, api]
+    steps:
+      - name: checkout
+        uses: actions/checkout@v3
+      # Applying label approved here to use the same in other workflow - pr_workflow to run the back-merge action when
+      # any commits pushed post PR approval
+      - name: Apply approved label
+        uses: actions/github-script@v3
+        with:
+          github_token: ${{ github.token }}
+          script: |
+            github.issues.addLabels({
+              issue_number: context.issue.number,
+              owner: context.payload.repository.owner.login,
+              repo: context.payload.repository.name,
+              labels: ['approved']
+            })
+      - name: Print Base branch
+        run: echo ${{ github.event.pull_request.base.ref }}
+      # Back-merge master branch into feature post PR approval check
+      - name: backmerge-master
+        id: backmerge
+        uses: devmasx/merge-branch@master
+        with:
+          type: now
+          from_branch: ${{ github.event.pull_request.base.ref }}
+          target_branch: ${{ github.event.pull_request.head.ref }}
+          github_token: ${{ secrets.CI_BOT_TOKEN }}
+      # If Backmerge failed, then comment in PR to resolve manually
+      - name: Comments
+        if: ${{failure()}}
+        uses: mshick/add-pr-comment@v1
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        with:
+          message: |
+            **Conflict Error Please back-merge manually**
+          allow-repeats: true
+      # checkout the festure branch post back-merge of master
+      - uses: actions/checkout@v3
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+      # set the new commit id in Github env
+      - name: Set New commit Id in Github env post backmerge
+        id: new_commit
+        run: echo "GIT_NEW_COMMIT_AFTER_MERGE=$(git rev-parse --verify HEAD)" >> $GITHUB_ENV
