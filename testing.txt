@@ -1,2 +1,3 @@
 Resolved Conflicts
-g
+
+G
