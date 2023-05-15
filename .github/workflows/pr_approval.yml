@@ -39,6 +39,14 @@ jobs:
           target_branch: ${{ github.event.pull_request.head.ref }}
           github_token: ${{ secrets.CI_BOT_TOKEN }}
       # If Backmerge failed, then comment in PR to resolve manually
+      - name: Update Pull Request
+        uses: peter-evans/update-pull-request@v2
+        with:
+          github-token: ${{ secrets.CI_BOT_TOKEN }}
+          repository: ${{ github.repository }}
+          pull-request-number: ${{ github.event.pull_request.number }}
+          body: |
+            This pull request has been successfully back-merged.
       - name: Comments
         if: ${{failure()}}
         uses: mshick/add-pr-comment@v1
