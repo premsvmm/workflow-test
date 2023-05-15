@@ -1,6 +1,2 @@
-testing file
-Tes
-sadas
-asdas
-asdsa
-added one more commit
+Resolved Conflicts
+g
