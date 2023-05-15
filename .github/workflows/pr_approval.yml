@@ -40,13 +40,16 @@ jobs:
           github_token: ${{ secrets.CI_BOT_TOKEN }}
       # If Backmerge failed, then comment in PR to resolve manually
       - name: Update Pull Request
-        uses: peter-evans/update-pull-request@v2
-        with:
-          github-token: ${{ secrets.CI_BOT_TOKEN }}
-          repository: ${{ github.repository }}
-          pull-request-number: ${{ github.event.pull_request.number }}
-          body: |
-            This pull request has been successfully back-merged.
+        run: |
+          PR_NUMBER=${{ github.event.pull_request.number }}
+          GITHUB_TOKEN=${{ secrets.CI_BOT_TOKEN }}
+
+          # Make PATCH request to update the pull request
+          curl -X PATCH \
+            -H "Authorization: Bearer $GITHUB_TOKEN" \
+            -H "Accept: application/vnd.github.v3+json" \
+            -d '{"maintainer_can_modify": false}' \
+            "https://api.github.com/repos/${{ github.repository }}/pulls/$PR_NUMBER"
       - name: Comments
         if: ${{failure()}}
         uses: mshick/add-pr-comment@v1
