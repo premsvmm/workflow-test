@@ -36,6 +36,7 @@ jobs:
         with:
           type: now
           from_branch: ${{ github.event.pull_request.base.ref }}
+          message: Rebased with master
           target_branch: ${{ github.event.pull_request.head.ref }}
           github_token: ${{ secrets.CI_BOT_TOKEN }}
       # If Backmerge failed, then comment in PR to resolve manually
