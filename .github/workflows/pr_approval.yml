@@ -9,9 +9,20 @@ jobs:
     env:
       commit_id: ${{ github.event.pull_request.head.sha }}
     # Trigger back-merge master when PR is approved and feature branch isn't hotfix branch
-    if: github.event.review.state == 'approved' && !contains(github.event.pull_request.head.ref, 'hotfix') && !contains(github.event.pull_request.head.ref, 'revert-')
+    if: github.event.review.state == 'approved'
     runs-on: [ ubuntu-latest ]
     steps:
+      - name: Get Workflow Run URL
+        id: workflow_run
+        run: echo "::set-output name=url::https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+      - name: Workflow Comments
+        uses: mshick/add-pr-comment@v1
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        with:
+          message: |
+            `Github Workflow For BVT Devstack :`  [View the progress here](https://github.com/premsvmm/workflow-test/actions/runs/5011217589)
+          allow-repeats: true
       - name: checkout
         uses: actions/checkout@v3
       # Applying label approved here to use the same in other workflow - pr_workflow to run the back-merge action when
