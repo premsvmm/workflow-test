@@ -9,9 +9,31 @@ jobs:
     env:
       commit_id: ${{ github.event.pull_request.head.sha }}
     # Trigger back-merge master when PR is approved and feature branch isn't hotfix branch
-    if: github.event.review.state == 'approved' && !contains(github.event.pull_request.head.ref, 'hotfix') && !contains(github.event.pull_request.head.ref, 'revert-')
+    if: github.event.review.state == 'approved'
     runs-on: [ ubuntu-latest ]
     steps:
+      - name: Add Comment with Workflow Run Link
+        uses: actions/github-script@v5
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const { data: workflows } = await github.actions.listWorkflowRuns({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              ref: context.sha,
+              event: 'pull_request'
+            });
+
+            if (workflows.total_count > 0) {
+              const workflowRun = workflows.workflow_runs[0]; // Assuming only one workflow run is triggered per PR
+              const comment = `The workflow is currently running. [View the progress here](${workflowRun.html_url}).`;
+              await github.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.payload.pull_request.number,
+                body: comment
+              });
+            }
       - name: checkout
         uses: actions/checkout@v3
       # Applying label approved here to use the same in other workflow - pr_workflow to run the back-merge action when
