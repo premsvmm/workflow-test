@@ -12,28 +12,22 @@ jobs:
     if: github.event.review.state == 'approved'
     runs-on: [ ubuntu-latest ]
     steps:
-      - name: Add Comment with Workflow Run Link
+      - name: Get Workflow Run URL
+        id: workflow_run
+        run: echo "::set-output name=url::https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+
+      - name: Add Comment with Workflow Link
         uses: actions/github-script@v5
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            const { data: workflows } = await github.actions.listWorkflowRuns({
+            const comment = `The workflow is currently running. [View the progress here](${{ steps.workflow_run.outputs.url }}).`;
+            github.issues.createComment({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              ref: context.sha,
-              event: 'pull_request'
+              issue_number: context.payload.workflow_run.pull_requests[0].number,
+              body: comment
             });
-
-            if (workflows.total_count > 0) {
-              const workflowRun = workflows.workflow_runs[0]; // Assuming only one workflow run is triggered per PR
-              const comment = `The workflow is currently running. [View the progress here](${workflowRun.html_url}).`;
-              await github.issues.createComment({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                issue_number: context.payload.pull_request.number,
-                body: comment
-              });
-            }
       - name: checkout
         uses: actions/checkout@v3
       # Applying label approved here to use the same in other workflow - pr_workflow to run the back-merge action when
