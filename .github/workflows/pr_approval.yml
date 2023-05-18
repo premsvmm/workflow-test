@@ -12,22 +12,28 @@ jobs:
     if: github.event.review.state == 'approved'
     runs-on: [ ubuntu-latest ]
     steps:
-      - name: Get Workflow Run URL
-        id: workflow_run
-        run: echo "::set-output name=url::https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
-
-      - name: Add Comment with Workflow Link
+      - name: Check Previous Workflow Runs
+        id: check-runs
         uses: actions/github-script@v5
         with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            const comment = `The workflow is currently running. [View the progress here](${{ steps.workflow_run.outputs.url }}).`;
-            github.issues.createComment({
+            const previousRuns = await github.actions.listWorkflowRuns({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              issue_number: context.payload.workflow_run.pull_requests[0].number,
-              body: comment
+              workflow_id: 'Pull Request Workflow',
+              branch: context.payload.pull_request.head.ref,
+              event: 'pull_request'
             });
+            const approvedRunExists = previousRuns.data.some(run => run.conclusion === 'success');
+            console.log(`Approved run exists: ${approvedRunExists}`);
+            core.setOutput('approvedRunExists', approvedRunExists);
+      - name: Skip Workflow If Approved Run Exists
+        if: steps.check-runs.outputs.approvedRunExists == 'true'
+        run: echo "Skipping workflow as an approved run already exists."
+
+      - name: Notify Users
+        if: steps.check-runs.outputs.approvedRunExists != 'true'
+        run: echo "Triggering event and notifying users."
       - name: checkout
         uses: actions/checkout@v3
       # Applying label approved here to use the same in other workflow - pr_workflow to run the back-merge action when
