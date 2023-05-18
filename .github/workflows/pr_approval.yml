@@ -22,7 +22,7 @@ jobs:
         with:
           message: |
             `The workflow is currently running. [View the progress here](${{ steps.workflow_run.outputs.url }}).`
-        allow-repeats: true
+          allow-repeats: true
       - name: checkout
         uses: actions/checkout@v3
       # Applying label approved here to use the same in other workflow - pr_workflow to run the back-merge action when
