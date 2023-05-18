@@ -22,7 +22,7 @@ jobs:
         with:
           message: |
             `The workflow is currently running. [View the progress here](${{ steps.workflow_run.outputs.url }}).`
-        allow-repeats: true
+          allow-repeats: true
       - name: checkout
         uses: actions/checkout@v3
       # Applying label approved here to use the same in other workflow - pr_workflow to run the back-merge action when
@@ -70,7 +70,7 @@ jobs:
         with:
           message: |
             **Conflict Error Please back-merge manually**
-        allow-repeats: true
+          allow-repeats: true
       # checkout the festure branch post back-merge of master
       - uses: actions/checkout@v3
         with:
